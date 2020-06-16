@@ -6,11 +6,15 @@ import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.Driver;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
@@ -19,29 +23,29 @@ import static org.openqa.selenium.OutputType.BYTES;
 public class ResultFetcher {
 
     public static void main(String[] args){
-        System.setProperty("webdriver.chrome.driver", "C:\\Users\\andyc\\Documents\\chromedriver.exe");
-        WebDriver driver = new ChromeDriver(new ChromeOptions().setHeadless(true));
-        driver.manage().window().maximize();
+        System.setProperty("webdriver.gecko.driver", "C:\\Users\\andyc\\Documents\\geckodriver.exe");
+        FirefoxOptions options = new FirefoxOptions();
+        options.setHeadless(true);
+        WebDriver driver = new FirefoxDriver(options);
+
         try {
-            driver.navigate().to("https://www.google.co.uk/search?hl=en&q=speed+test&meta=");
+            driver.get("https://www.google.co.uk/search?hl=en&q=speed+test&meta=");
+            driver.manage().window().maximize();
             WebElement testButton = driver.findElement(By.id("knowledge-verticals-internetspeedtest__test_button"));
-            //WebElement testButton = driver.findElementById("knowledge-verticals-internetspeedtest__test_button");
             testButton.click();
             Thread.sleep(30000);
             WebElement results = driver.findElement(By.className("AU64fe"));
-
             String downloadSpeed = driver.findElement(By.id("knowledge-verticals-internetspeedtest__download")).getText().split("\\n")[0];
             String uploadSpeed = driver.findElement(By.id("knowledge-verticals-internetspeedtest__upload")).getText().split("\\n")[0];
             saveSpeeds(downloadSpeed, uploadSpeed);
-
             Calendar cal = new GregorianCalendar();
-            String today = cal.get(Calendar.DATE) + "-" + (cal.get(Calendar.MONTH)+1) + "-" + cal.get(Calendar.YEAR);
+            String today = cal.get(Calendar.YEAR) + "-" + (cal.get(Calendar.MONTH) + 1) + "-" + cal.get(Calendar.DATE);
             String fileName = "C:\\Users\\andyc\\Desktop\\Screenshots\\" + today + ".png";
             saveImage(results.getScreenshotAs(BYTES), fileName);
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
-            driver.close();
+            driver.quit();
         }
     }
 
@@ -58,6 +62,7 @@ public class ResultFetcher {
                 try {
                     stream.close();
                 } catch (IOException var12) {
+                    var12.printStackTrace();
                 }
             }
         }
