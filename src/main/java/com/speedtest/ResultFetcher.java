@@ -1,6 +1,7 @@
 package com.speedtest;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.Point;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
@@ -8,6 +9,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.interactions.Actions;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -29,17 +31,18 @@ public class ResultFetcher {
         WebDriver driver = new FirefoxDriver(options);
 
         try {
-            driver.get("https://www.google.co.uk/search?hl=en&q=speed+test&meta=");
+            driver.get("https://www.speedtest.net");
             driver.manage().window().maximize();
-            WebElement testButton = driver.findElement(By.id("knowledge-verticals-internetspeedtest__test_button"));
-            testButton.click();
+            WebElement consentButton = driver.findElement(By.id("_evidon-banner-acceptbutton"));
+            consentButton.click();
+            WebElement testButton = driver.findElement(By.className("start-text"));
+            ClickCentre(testButton, driver);
             Thread.sleep(30000);
-            WebElement results = driver.findElement(By.className("AU64fe"));
-            String downloadSpeed = driver.findElement(By.id("knowledge-verticals-internetspeedtest__download")).getText().split("\\n")[0];
-            String uploadSpeed = driver.findElement(By.id("knowledge-verticals-internetspeedtest__upload")).getText().split("\\n")[0];
-            saveSpeeds(downloadSpeed, uploadSpeed);
+            WebElement results = driver.findElement(By.className("speedtest-container"));
+            String[] uploadDownload = GetDownAndUpload(driver);
+            saveSpeeds(uploadDownload[0], uploadDownload[1]);
             Calendar cal = new GregorianCalendar();
-            String today = cal.get(Calendar.YEAR) + "-" + (cal.get(Calendar.MONTH) + 1) + "-" + cal.get(Calendar.DATE);
+            String today = cal.get(Calendar.YEAR) + "-" + make2Digit(cal.get(Calendar.MONTH) + 1) + "-" + make2Digit(cal.get(Calendar.DATE));
             String fileName = "C:\\Users\\andyc\\Desktop\\Screenshots\\" + today + ".png";
             saveImage(results.getScreenshotAs(BYTES), fileName);
         } catch (InterruptedException e) {
@@ -47,6 +50,23 @@ public class ResultFetcher {
         } finally {
             driver.quit();
         }
+    }
+
+    private static String[] GetDownAndUpload(WebDriver driver) throws InterruptedException {
+        String[] results = new String[2];
+        String down = "";
+        while (down.isBlank()){
+            down = driver.findElement(By.className("download-speed")).getText();
+            Thread.sleep(5000);
+        }
+        results[0] = down;
+        String up = "";
+        while (up.isBlank()){
+            up = driver.findElement(By.className("upload-speed")).getText();
+            Thread.sleep(5000);
+        }
+        results[1] = up;
+        return results;
     }
 
     private static void saveImage(byte[] fileBytes, String filePath){
@@ -70,7 +90,7 @@ public class ResultFetcher {
 
     private static void saveSpeeds(String down, String up){
         Calendar cal = new GregorianCalendar();
-        String today = cal.get(Calendar.DATE) + "/" + (cal.get(Calendar.MONTH)+1) + "/" + cal.get(Calendar.YEAR);
+        String today = make2Digit(cal.get(Calendar.DATE)) + "/" + make2Digit(cal.get(Calendar.MONTH)+1) + "/" + cal.get(Calendar.YEAR);
         String time = cal.get(Calendar.HOUR_OF_DAY)+":"+cal.get(Calendar.MINUTE);
         String textForFile = today + "," + time + "," + down + "," + up + System.lineSeparator();
         try {
@@ -84,4 +104,15 @@ public class ResultFetcher {
         }
     }
 
+    private static String make2Digit(int i){
+        if (i < 10){
+            return "0" + i;
+        }
+        return String.valueOf(i);
+    }
+
+    private static void ClickCentre(WebElement webElement, WebDriver driver){
+        Actions builder = new Actions(driver);
+        builder.moveToElement(webElement).click().build().perform();
+    }
 }
